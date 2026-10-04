@@ -5,7 +5,7 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: #050816;
+    background: #181b29;
     color: white;
 }
 
@@ -27,15 +27,15 @@ h1 {
 }
 
 .subtitle {
-    color: #aeb8d0;
+    color: #9399b8;
     margin-bottom: 40px;
 }
 
 .upload-box {
-    border: 2px dashed #536080;
+    border: 2px dashed #4e5d82;
     border-radius: 15px;
     padding: 40px;
-    background: #0d1326;
+    background: #020717;
     margin-bottom: 20px;
 }
 
@@ -44,7 +44,7 @@ input[type="file"] {
 }
 
 button {
-    background: #5b7cfa;
+    background: #8292d1;
     color: white;
     border: none;
     padding: 14px 30px;
@@ -54,13 +54,13 @@ button {
 }
 
 button:hover {
-    background: #4968d8;
+    background: #626fa1;
 }
 
 .result {
     margin-top: 50px;
     padding: 25px;
-    background: #0d1326;
+    background: #020717;
     border-radius: 15px;
 }
 
