@@ -9,6 +9,11 @@ body {
     color: white;
 }
 
+h1,
+h2 {
+    font-family: "Playfair Display", serif;
+}
+
 .container {
     width: 90%;
     max-width: 800px;
