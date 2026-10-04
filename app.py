@@ -71,6 +71,20 @@ def detect_stars(image_path):
     return image, detected_stars
 
 
+def normalize_stars(stars, image_width, image_height):
+    normalized = []
+
+    for x, y in stars:
+        normalized_x = x / image_width
+        normalized_y = y / image_height
+
+        normalized.append(
+            (normalized_x, normalized_y)
+        )
+
+    return normalized
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -97,6 +111,12 @@ def analyze():
 
     try:
         result, stars = detect_stars(input_path)
+        height, width = result.shape[:2]
+        normalized_stars = normalize_stars(
+            stars,
+            width,
+            height
+        )
 
         output_filename = "result_" + filename
         output_path = os.path.join(
