@@ -1,1 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Night Sky Identifier</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🌌 Night Sky Identifier</h1>
+
+        <p class="subtitle">
+            Upload a night-sky photograph to detect visible stars.
+        </p>
+
+        <form
+            action="/analyze"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <div class="upload-box">
+
+                <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    required
+                >
+
+                <p>
+                    Choose a night-sky image
+                </p>
+
+            </div>
+
+            <button type="submit">
+                Analyze Sky
+            </button>
+
+        </form>
+
+        {% if result_image %}
+
+        <div class="result">
+
+            <h2>Analysis Result</h2>
+
+            <img
+                src="{{ url_for('uploaded_file',
+                    filename=result_image) }}"
+                alt="Processed night sky"
+            >
+
+            <p>
+                ⭐ Detected stars:
+                <strong>{{ star_count }}</strong>
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
 
