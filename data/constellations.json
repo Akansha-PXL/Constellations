@@ -1,1 +1,17 @@
-
+{
+    "constellations": [
+        {
+            "name": "Orion",
+            "stars": [
+                [0.20, 0.25],
+                [0.42, 0.20],
+                [0.48, 0.45],
+                [0.50, 0.55],
+                [0.62, 0.52],
+                [0.72, 0.75],
+                [0.35, 0.78]
+            ],
+            "description": "Orion is a prominent constellation recognizable by the three stars forming its belt."
+        }
+    ]
+}
