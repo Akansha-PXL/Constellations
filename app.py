@@ -82,11 +82,10 @@ def detect_stars(image_path):
     
 
     threshold_values = [
-        12,
-        18,
         25,
         35,
-        50
+        50,
+        70
     ]
 
     candidate_points = []
@@ -280,7 +279,7 @@ def detect_stars(image_path):
 
     final_points = []
 
-    minimum_distance = 5
+    minimum_distance = 8
 
     for candidate in candidate_points:
 
@@ -309,7 +308,7 @@ def detect_stars(image_path):
 
    
 
-    maximum_stars = 1000
+    maximum_stars = 200
 
     final_points.sort(
         key=lambda p: p[3],
