@@ -101,65 +101,164 @@ def match_constellation(stars, constellation_data):
             dtype=float
         )
 
-        if len(detected) < len(pattern):
+        pattern_count = len(pattern)
+
+        # We need at least 3 stars to make a meaningful shape
+        if pattern_count < 3 or len(detected) < 3:
             continue
 
-        # Calculate pairwise distances for the detected stars
-        detected_distances = []
+        # --------------------------------------------------
+        # Normalize the pattern
+        # --------------------------------------------------
 
-        for i in range(len(detected)):
-            for j in range(i + 1, len(detected)):
-                distance = np.linalg.norm(
-                    detected[i] - detected[j]
-                )
-                detected_distances.append(distance)
+        pattern_center = np.mean(pattern, axis=0)
+        pattern_centered = pattern - pattern_center
 
-        # Calculate pairwise distances for the constellation pattern
+        pattern_scale = np.sqrt(
+            np.mean(np.sum(pattern_centered ** 2, axis=1))
+        )
+
+        if pattern_scale == 0:
+            continue
+
+        pattern_normalized = pattern_centered / pattern_scale
+
+        # --------------------------------------------------
+        # Try groups of detected stars
+        # --------------------------------------------------
+
+        # If we have many detected stars, use combinations
+        # of the most useful candidates instead of every star.
+        if len(detected) > 12:
+            detected_center = np.mean(detected, axis=0)
+
+            distances_from_center = np.linalg.norm(
+                detected - detected_center,
+                axis=1
+            )
+
+            indices = np.argsort(
+                distances_from_center
+            )[:12]
+
+            candidates = detected[indices]
+
+        else:
+            candidates = detected
+
+        # --------------------------------------------------
+        # Compare the overall shape
+        # --------------------------------------------------
+
+        candidate_center = np.mean(candidates, axis=0)
+        candidate_centered = candidates - candidate_center
+
+        candidate_scale = np.sqrt(
+            np.mean(
+                np.sum(candidate_centered ** 2, axis=1)
+            )
+        )
+
+        if candidate_scale == 0:
+            continue
+
+        candidate_normalized = (
+            candidate_centered / candidate_scale
+        )
+
+        # --------------------------------------------------
+        # Compare pairwise distances
+        #
+        # Pairwise distances are unaffected by rotation,
+        # translation, or the order of the stars.
+        # --------------------------------------------------
+
         pattern_distances = []
 
-        for i in range(len(pattern)):
-            for j in range(i + 1, len(pattern)):
+        for i in range(pattern_count):
+            for j in range(i + 1, pattern_count):
                 distance = np.linalg.norm(
-                    pattern[i] - pattern[j]
+                    pattern_normalized[i]
+                    - pattern_normalized[j]
                 )
                 pattern_distances.append(distance)
 
-        # Sort distances so that the comparison is
-        # independent of the order of the stars
-        detected_distances.sort()
-        pattern_distances.sort()
-
-        # Only compare the number of distances
-        # that the constellation pattern requires
-        detected_distances = detected_distances[
-            :len(pattern_distances)
-        ]
-
-        # Normalize distances by the largest distance
-        if detected_distances[-1] == 0:
-            continue
-
-        detected_distances = np.array(
-            detected_distances
-        ) / detected_distances[-1]
-
         pattern_distances = np.array(
             pattern_distances
-        ) / pattern_distances[-1]
+        )
 
-        # Calculate difference between the patterns
+        # For each detected star, compare its distances to
+        # all other detected stars.
+        candidate_distances = []
+
+        for i in range(len(candidate_normalized)):
+            for j in range(i + 1, len(candidate_normalized)):
+                distance = np.linalg.norm(
+                    candidate_normalized[i]
+                    - candidate_normalized[j]
+                )
+                candidate_distances.append(distance)
+
+        candidate_distances = np.array(
+            candidate_distances
+        )
+
+        if len(candidate_distances) == 0:
+            continue
+
+        # Normalize both distance sets.
+        pattern_distances /= np.max(pattern_distances)
+        candidate_distances /= np.max(candidate_distances)
+
+        # --------------------------------------------------
+        # Compare the distributions of distances
+        # --------------------------------------------------
+
+        pattern_sorted = np.sort(pattern_distances)
+        candidate_sorted = np.sort(candidate_distances)
+
+        # Resample candidate distances so both arrays have
+        # the same length.
+        candidate_resampled = np.interp(
+            np.linspace(
+                0,
+                1,
+                len(pattern_sorted)
+            ),
+            np.linspace(
+                0,
+                1,
+                len(candidate_sorted)
+            ),
+            candidate_sorted
+        )
+
         score = np.mean(
             np.abs(
-                detected_distances - pattern_distances
+                pattern_sorted
+                - candidate_resampled
             )
         )
+
+        # --------------------------------------------------
+        # Keep the best match
+        # --------------------------------------------------
 
         if score < best_score:
             best_score = score
             best_match = constellation
 
-    return best_match
+    # ------------------------------------------------------
+    # Confidence threshold
+    #
+    # Prevent the program from claiming a random
+    # constellation when the match is poor.
+    # ------------------------------------------------------
 
+    if best_score > 0.18:
+        return None
+
+    return best_match
 
 @app.route("/")
 def index():
