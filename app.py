@@ -127,7 +127,12 @@ def match_constellation(stars, constellation_data):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template(
+    "index.html",
+    result_image=output_filename,
+    star_count=len(stars),
+    constellation=constellation
+)
 
 
 @app.route("/analyze", methods=["POST"])
