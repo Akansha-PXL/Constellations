@@ -33,7 +33,7 @@ def detect_stars(image_path):
     # Detect bright objects
     _, threshold = cv2.threshold(
         blurred,
-        180,
+        150,
         255,
         cv2.THRESH_BINARY
     )
