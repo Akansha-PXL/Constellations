@@ -1,109 +1,80 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-```
-<link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constellations</title></title>
 
-<title>Constellations</title>
-
-<link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='styles.css') }}"
->
-```
-
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 </head>
 
 <body>
 
-```
-<div class="container">
+    <div class="container">
 
-    <h1>CONSTELLATIONS</h1>
+        <h1>CONSTELLATIONS</h1>
 
-    <p class="subtitle">
-        Upload an image to find the constellations.
-    </p>
+        <p class="subtitle">
+            Upload an image to find the constellations.
+        </p>
 
-    <form
-        action="/analyze"
-        method="POST"
-        enctype="multipart/form-data"
-    >
+        <form
+            action="/analyze"
+            method="POST"
+            enctype="multipart/form-data"
+        >
 
-        <div class="upload-box">
+            <div class="upload-box">
 
-            <input
-                type="file"
-                name="image"
-                accept="image/*"
-                required
+                <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    required
+                >
+
+                <p>
+                    Choose a night-sky image
+                </p>
+
+            </div>
+
+            <button type="submit">
+                Analyze Sky
+            </button>
+
+        </form>
+
+        {% if result_image %}
+
+        <div class="result">
+
+            <h2>Analysis Result</h2>
+
+            <img
+                src="{{ url_for('uploaded_file',
+                    filename=result_image) }}"
+                alt="Processed night sky"
             >
 
             <p>
-                Choose a night-sky image
+                Detected stars:
+                <strong>{{ star_count }}</strong>
             </p>
 
         </div>
 
-        <button type="submit">
-            Analyze Sky
-        </button>
-
-    </form>
-
-    {% if result_image %}
-
-    <div class="result">
-
-        <h2>Analysis Result</h2>
-
-        <img
-            src="{{ url_for('uploaded_file',
-                filename=result_image) }}"
-            alt="Processed night sky"
-        >
-
-        <p>
-            Detected stars:
-            <strong>{{ star_count }}</strong>
-        </p>
-
-        {% if constellation %}
-
-        <h2>
-            Constellation:
-            {{ constellation.name }}
-        </h2>
-
-        <p>
-            {{ constellation.description }}
-        </p>
-
-        {% else %}
-
-        <p>
-            No constellation could be identified.
-        </p>
-
         {% endif %}
 
     </div>
-
-    {% endif %}
-
-</div>
-```
 
 </body>
 </html>
