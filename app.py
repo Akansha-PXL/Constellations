@@ -84,6 +84,7 @@ def normalize_stars(stars, image_width, image_height):
 
     return normalized
 
+
 def match_constellation(stars, constellation_data):
     if len(stars) < 3:
         return None
@@ -127,12 +128,7 @@ def match_constellation(stars, constellation_data):
 
 @app.route("/")
 def index():
-    return render_template(
-    "index.html",
-    result_image=output_filename,
-    star_count=len(stars),
-    constellation=constellation
-)
+    return render_template("index.html")
 
 
 @app.route("/analyze", methods=["POST"])
@@ -147,6 +143,7 @@ def analyze():
         return "No image selected", 400
 
     filename = str(uuid.uuid4()) + ".jpg"
+
     input_path = os.path.join(
         app.config["UPLOAD_FOLDER"],
         filename
@@ -156,18 +153,22 @@ def analyze():
 
     try:
         result, stars = detect_stars(input_path)
+
         height, width = result.shape[:2]
+
         normalized_stars = normalize_stars(
             stars,
             width,
             height
         )
+
         constellation = match_constellation(
-        normalized_stars,
-        constellation_data
+            normalized_stars,
+            constellation_data
         )
 
         output_filename = "result_" + filename
+
         output_path = os.path.join(
             app.config["UPLOAD_FOLDER"],
             output_filename
@@ -178,13 +179,12 @@ def analyze():
         return render_template(
             "index.html",
             result_image=output_filename,
-            star_count=len(stars)
+            star_count=len(stars),
+            constellation=constellation
         )
 
     except Exception as e:
         return f"Processing error: {e}", 500
-
-
 
 
 @app.route("/uploads/<filename>")
