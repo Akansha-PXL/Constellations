@@ -27,11 +27,10 @@ def detect_stars(image_path):
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Reduce noise while preserving bright points
+    # Reduce noise
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
-    # Use a relative brightness threshold
-    # This works better for photos with different exposure levels
+    # Calculate a relative brightness threshold
     mean_brightness = np.mean(blurred)
     std_brightness = np.std(blurred)
 
@@ -53,37 +52,64 @@ def detect_stars(image_path):
         connectivity=8
     )
 
-    detected_stars = []
+    star_candidates = []
 
     for i in range(1, num_labels):
+
         x = stats[i, cv2.CC_STAT_LEFT]
         y = stats[i, cv2.CC_STAT_TOP]
         width = stats[i, cv2.CC_STAT_WIDTH]
         height = stats[i, cv2.CC_STAT_HEIGHT]
         area = stats[i, cv2.CC_STAT_AREA]
 
-        # Ignore very large bright regions
+        # Ignore very large regions
         if area > 100:
             continue
 
-        # Ignore extremely tiny noise
+        # Ignore extremely tiny regions
         if area < 1:
             continue
 
-        # Stars should generally be compact
+        # Stars should be compact
         if width > 15 or height > 15:
             continue
 
         center_x, center_y = centroids[i]
 
-        detected_stars.append(
-            (int(center_x), int(center_y))
+        # Measure brightness at the centre of the detected object
+        brightness = blurred[
+            int(center_y),
+            int(center_x)
+        ]
+
+        star_candidates.append(
+            (
+                int(center_x),
+                int(center_y),
+                float(brightness)
+            )
         )
 
-        # Mark detected stars on the output image
+    # Keep only the strongest stars
+    MAX_STARS = 20
+
+    star_candidates.sort(
+        key=lambda star: star[2],
+        reverse=True
+    )
+
+    selected_stars = star_candidates[:MAX_STARS]
+
+    detected_stars = []
+
+    # Draw selected stars on the image
+    for x, y, brightness in selected_stars:
+
+        detected_stars.append((x, y))
+
         cv2.circle(
             image,
-            (int(center_x), int(center_y)),
+            (x, y),
             5,
             (0, 255, 0),
             1
