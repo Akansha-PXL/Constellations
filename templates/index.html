@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,9 +18,11 @@
 
     <link
         rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
+        href="{{ url_for('static', filename='styles.css') }}"
     >
+
 </head>
+
 
 <body>
 
@@ -23,8 +31,9 @@
         <h1>CONSTELLATIONS</h1>
 
         <p class="subtitle">
-            Upload an image to find the constellations.
+            Upload an image to find the constellation.
         </p>
+
 
         <form
             action="/analyze"
@@ -47,11 +56,13 @@
 
             </div>
 
+
             <button type="submit">
                 Analyze Sky
             </button>
 
         </form>
+
 
         {% if result_image %}
 
@@ -59,16 +70,38 @@
 
             <h2>Analysis Result</h2>
 
+
             <img
                 src="{{ url_for('uploaded_file',
                     filename=result_image) }}"
                 alt="Processed night sky"
             >
 
+
             <p>
                 Detected stars:
                 <strong>{{ star_count }}</strong>
             </p>
+
+
+            {% if constellation %}
+
+            <h2>
+                Constellation:
+                {{ constellation.name }}
+            </h2>
+
+            <p>
+                {{ constellation.description }}
+            </p>
+
+            {% else %}
+
+            <p>
+                No constellation could be identified.
+            </p>
+
+            {% endif %}
 
         </div>
 
@@ -77,5 +110,5 @@
     </div>
 
 </body>
-</html>
 
+</html>
