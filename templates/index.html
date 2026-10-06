@@ -69,6 +69,24 @@
                 Detected stars:
                 <strong>{{ star_count }}</strong>
             </p>
+            {% if constellation %}
+
+            <h2>
+                Constellation:
+                {{ constellation.name }}
+            </h2>
+
+            <p>
+                {{ constellation.description }}
+            </p>
+
+            {% else %}
+
+            <p>
+                No constellation could be identified.
+            </p>
+
+            {% endif %}
 
         </div>
 
@@ -77,4 +95,7 @@
     </div>
 
 </body>
+
 </html>
+
+        
