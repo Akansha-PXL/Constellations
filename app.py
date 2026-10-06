@@ -89,35 +89,70 @@ def match_constellation(stars, constellation_data):
     if len(stars) < 3:
         return None
 
+    detected = np.array(stars, dtype=float)
+
     best_match = None
     best_score = float("inf")
 
     for constellation in constellation_data["constellations"]:
-        pattern = constellation["stars"]
 
-        if len(stars) < len(pattern):
+        pattern = np.array(
+            constellation["stars"],
+            dtype=float
+        )
+
+        if len(detected) < len(pattern):
             continue
 
-        # Compare the overall spread of the detected stars
-        detected_x = [star[0] for star in stars]
-        detected_y = [star[1] for star in stars]
+        # Calculate pairwise distances for the detected stars
+        detected_distances = []
 
-        pattern_x = [star[0] for star in pattern]
-        pattern_y = [star[1] for star in pattern]
+        for i in range(len(detected)):
+            for j in range(i + 1, len(detected)):
+                distance = np.linalg.norm(
+                    detected[i] - detected[j]
+                )
+                detected_distances.append(distance)
 
-        detected_width = max(detected_x) - min(detected_x)
-        detected_height = max(detected_y) - min(detected_y)
+        # Calculate pairwise distances for the constellation pattern
+        pattern_distances = []
 
-        pattern_width = max(pattern_x) - min(pattern_x)
-        pattern_height = max(pattern_y) - min(pattern_y)
+        for i in range(len(pattern)):
+            for j in range(i + 1, len(pattern)):
+                distance = np.linalg.norm(
+                    pattern[i] - pattern[j]
+                )
+                pattern_distances.append(distance)
 
-        if detected_width == 0 or detected_height == 0:
+        # Sort distances so that the comparison is
+        # independent of the order of the stars
+        detected_distances.sort()
+        pattern_distances.sort()
+
+        # Only compare the number of distances
+        # that the constellation pattern requires
+        detected_distances = detected_distances[
+            :len(pattern_distances)
+        ]
+
+        # Normalize distances by the largest distance
+        if detected_distances[-1] == 0:
             continue
 
-        detected_aspect = detected_width / detected_height
-        pattern_aspect = pattern_width / pattern_height
+        detected_distances = np.array(
+            detected_distances
+        ) / detected_distances[-1]
 
-        score = abs(detected_aspect - pattern_aspect)
+        pattern_distances = np.array(
+            pattern_distances
+        ) / pattern_distances[-1]
+
+        # Calculate difference between the patterns
+        score = np.mean(
+            np.abs(
+                detected_distances - pattern_distances
+            )
+        )
 
         if score < best_score:
             best_score = score
