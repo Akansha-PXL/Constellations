@@ -84,6 +84,46 @@ def normalize_stars(stars, image_width, image_height):
 
     return normalized
 
+def match_constellation(stars, constellation_data):
+    if len(stars) < 3:
+        return None
+
+    best_match = None
+    best_score = float("inf")
+
+    for constellation in constellation_data["constellations"]:
+        pattern = constellation["stars"]
+
+        if len(stars) < len(pattern):
+            continue
+
+        # Compare the overall spread of the detected stars
+        detected_x = [star[0] for star in stars]
+        detected_y = [star[1] for star in stars]
+
+        pattern_x = [star[0] for star in pattern]
+        pattern_y = [star[1] for star in pattern]
+
+        detected_width = max(detected_x) - min(detected_x)
+        detected_height = max(detected_y) - min(detected_y)
+
+        pattern_width = max(pattern_x) - min(pattern_x)
+        pattern_height = max(pattern_y) - min(pattern_y)
+
+        if detected_width == 0 or detected_height == 0:
+            continue
+
+        detected_aspect = detected_width / detected_height
+        pattern_aspect = pattern_width / pattern_height
+
+        score = abs(detected_aspect - pattern_aspect)
+
+        if score < best_score:
+            best_score = score
+            best_match = constellation
+
+    return best_match
+
 
 @app.route("/")
 def index():
@@ -117,6 +157,10 @@ def analyze():
             width,
             height
         )
+        constellation = match_constellation(
+        normalized_stars,
+        constellation_data
+        )
 
         output_filename = "result_" + filename
         output_path = os.path.join(
@@ -134,6 +178,8 @@ def analyze():
 
     except Exception as e:
         return f"Processing error: {e}", 500
+
+
 
 
 @app.route("/uploads/<filename>")
