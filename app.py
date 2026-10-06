@@ -30,90 +30,43 @@ def detect_stars(image_path):
     # Reduce noise
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
-    # Calculate a relative brightness threshold
-    mean_brightness = np.mean(blurred)
-    std_brightness = np.std(blurred)
-
-    threshold_value = mean_brightness + (1.5 * std_brightness)
-
-    # Keep threshold within a sensible range
-    threshold_value = max(80, min(threshold_value, 220))
-
+    # Detect bright objects
     _, threshold = cv2.threshold(
         blurred,
-        threshold_value,
+        180,
         255,
         cv2.THRESH_BINARY
     )
 
-    # Find connected bright regions
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
+    # Find bright regions
+    contours, _ = cv2.findContours(
         threshold,
-        connectivity=8
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
     )
-
-    star_candidates = []
-
-    for i in range(1, num_labels):
-
-        x = stats[i, cv2.CC_STAT_LEFT]
-        y = stats[i, cv2.CC_STAT_TOP]
-        width = stats[i, cv2.CC_STAT_WIDTH]
-        height = stats[i, cv2.CC_STAT_HEIGHT]
-        area = stats[i, cv2.CC_STAT_AREA]
-
-        # Ignore very large regions
-        if area > 100:
-            continue
-
-        # Ignore extremely tiny regions
-        if area < 1:
-            continue
-
-        # Stars should be compact
-        if width > 15 or height > 15:
-            continue
-
-        center_x, center_y = centroids[i]
-
-        # Measure brightness at the centre of the detected object
-        brightness = blurred[
-            int(center_y),
-            int(center_x)
-        ]
-
-        star_candidates.append(
-            (
-                int(center_x),
-                int(center_y),
-                float(brightness)
-            )
-        )
-
-    # Keep only the strongest stars
-    MAX_STARS = 20
-
-    star_candidates.sort(
-        key=lambda star: star[2],
-        reverse=True
-    )
-
-    selected_stars = star_candidates[:MAX_STARS]
 
     detected_stars = []
 
-    # Draw selected stars on the image
-    for x, y, brightness in selected_stars:
+    for contour in contours:
+        area = cv2.contourArea(contour)
 
-        detected_stars.append((x, y))
+        # Ignore extremely small/noisy regions
+        if 1 <= area <= 100:
+            moments = cv2.moments(contour)
 
-        cv2.circle(
-            image,
-            (x, y),
-            5,
-            (0, 255, 0),
-            1
-        )
+            if moments["m00"] != 0:
+                x = int(moments["m10"] / moments["m00"])
+                y = int(moments["m01"] / moments["m00"])
+
+                detected_stars.append((x, y))
+
+                cv2.circle(
+                    image,
+                    (x, y),
+                    5,
+                    (0, 255, 0),
+                    1
+                )
 
     return image, detected_stars
 
