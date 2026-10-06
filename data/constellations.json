@@ -12,6 +12,19 @@
                 [0.35, 0.78]
             ],
             "description": "Orion is a prominent constellation recognizable by the three stars forming its belt."
+        },
+        {
+            "name": "Ursa Major",
+            "stars": [
+                [0.15, 0.35],
+                [0.30, 0.25],
+                [0.45, 0.30],
+                [0.58, 0.42],
+                [0.72, 0.35],
+                [0.78, 0.55],
+                [0.60, 0.65]
+            ],
+            "description": "Ursa Major is a prominent northern constellation. Its seven brightest stars form the familiar Big Dipper pattern."
         }
     ]
 }
