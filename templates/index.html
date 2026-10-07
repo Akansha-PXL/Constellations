@@ -1,101 +1,267 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+<html lang="en">
+
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Constellations</title>
+```
+<title>Constellations — Night Sky Analyzer</title>
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}"
+>
+```
+
 </head>
 
 <body>
 
-    <div class="container">
+```
+<!-- Decorative stars -->
+<div class="stars stars-1"></div>
+<div class="stars stars-2"></div>
+<div class="stars stars-3"></div>
 
-        <h1>CONSTELLATIONS</h1>
+<main class="container">
+
+    <!-- Header -->
+    <header class="hero">
+
+        <div class="eyebrow">
+            ✦ NIGHT SKY ANALYZER
+        </div>
+
+        <h1>
+            Discover the <span>stars above.</span>
+        </h1>
 
         <p class="subtitle">
-            Upload an image to find the constellations.
+            Upload a night-sky image and let the stars reveal the
+            constellation hidden within.
         </p>
 
-        <form
-            action="/analyze"
-            method="POST"
-            enctype="multipart/form-data"
-        >
+    </header>
 
-            <div class="upload-box">
+
+    <!-- Upload Form -->
+    <form
+        action="/analyze"
+        method="POST"
+        enctype="multipart/form-data"
+        class="upload-form"
+    >
+
+        <div class="upload-box">
+
+            <div class="upload-icon">✦</div>
+
+            <h2>Upload your sky</h2>
+
+            <p class="upload-description">
+                Choose an image of the night sky
+            </p>
+
+            <label class="file-label">
+
+                <span class="file-button">
+                    Choose Image
+                </span>
+
+                <span class="file-name">
+                    PNG, JPG or JPEG
+                </span>
 
                 <input
                     type="file"
                     name="image"
                     accept="image/*"
                     required
+                    onchange="updateFileName(this)"
                 >
 
-                <p>
-                    Choose a night-sky image
-                </p>
+            </label>
 
+            <div class="upload-hint">
+                ✦ Best results with clear, dark-sky images
             </div>
 
-            <button type="submit">
-                Analyze Sky
-            </button>
+        </div>
 
-        </form>
+        <button type="submit" class="analyze-button">
+            <span>Analyze Sky</span>
+            <span class="arrow">→</span>
+        </button>
 
-        {% if result_image %}
+    </form>
 
-        <div class="result">
 
-            <h2>Analysis Result</h2>
+    <!-- Results -->
+    {% if result_image %}
+
+    <section class="result">
+
+        <div class="result-header">
+
+            <div>
+                <span class="result-label">
+                    ANALYSIS COMPLETE
+                </span>
+
+                <h2>Your night sky</h2>
+            </div>
+
+            <div class="result-star">
+                ✦
+            </div>
+
+        </div>
+
+
+        <div class="image-container">
 
             <img
-                src="{{ url_for('uploaded_file',
-                    filename=result_image) }}"
+                src="{{ url_for('uploaded_file', filename=result_image) }}"
                 alt="Processed night sky"
             >
 
-            <p>
-                Detected stars:
-                <strong>{{ star_count }}</strong>
-            </p>
+        </div>
+
+
+        <div class="stats">
+
+            <div class="stat-card">
+
+                <span class="stat-icon">
+                    ✦
+                </span>
+
+                <div>
+                    <span class="stat-label">
+                        STARS DETECTED
+                    </span>
+
+                    <strong>
+                        {{ star_count }}
+                    </strong>
+                </div>
+
+            </div>
+
+
             {% if constellation %}
 
-            <h2>
-                Constellation:
-                {{ constellation.name }}
-            </h2>
+            <div class="stat-card constellation-card">
 
-            <p>
-                {{ constellation.description }}
-            </p>
+                <span class="stat-icon">
+                    ✧
+                </span>
 
-            {% else %}
+                <div>
+                    <span class="stat-label">
+                        CONSTELLATION
+                    </span>
 
-            <p>
-                No constellation could be identified.
-            </p>
+                    <strong>
+                        {{ constellation.name }}
+                    </strong>
+                </div>
+
+            </div>
 
             {% endif %}
 
         </div>
 
+
+        {% if constellation %}
+
+        <div class="constellation-info">
+
+            <div class="constellation-line"></div>
+
+            <div class="constellation-content">
+
+                <span class="info-label">
+                    ABOUT THIS CONSTELLATION
+                </span>
+
+                <h2>
+                    {{ constellation.name }}
+                </h2>
+
+                <p>
+                    {{ constellation.description }}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% else %}
+
+        <div class="no-result">
+
+            <div class="no-result-icon">
+                ◌
+            </div>
+
+            <div>
+
+                <h3>
+                    No constellation identified
+                </h3>
+
+                <p>
+                    Try uploading a clearer image with more visible stars.
+                </p>
+
+            </div>
+
+        </div>
+
         {% endif %}
 
-    </div>
+    </section>
+
+    {% endif %}
+
+
+    <!-- Footer -->
+    <footer>
+        <span>✦</span>
+        Mapping the night sky, one image at a time.
+    </footer>
+
+</main>
+
+
+<script>
+    function updateFileName(input) {
+        const fileName = document.querySelector(".file-name");
+
+        if (input.files && input.files.length > 0) {
+            fileName.textContent = input.files[0].name;
+            fileName.classList.add("selected");
+        } else {
+            fileName.textContent = "PNG, JPG or JPEG";
+            fileName.classList.remove("selected");
+        }
+    }
+</script>
+```
 
 </body>
 
 </html>
-
-        
