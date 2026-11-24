@@ -1,107 +1,242 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080D20">
+
+    <title>CONSTELLATIONS | Explore the Night Sky</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Constellations</title>
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="stars stars-one"></div>
+    <div class="stars stars-two"></div>
 
-        <h1>CONSTELLATIONS</h1>
+    <header class="navbar">
+        <a class="brand" href="/">
+            <span class="brand-icon">✧</span>
+            CONSTELLATIONS
+        </a>
 
-        <p class="subtitle">
-            Upload an image to find the constellations.
-        </p>
+        <nav>
+            <a href="#identify">Identify</a>
+            <a href="#explore">Explore</a>
+            <a href="#about">About</a>
+        </nav>
 
-        <form
-            action="/analyze"
-            method="POST"
-            enctype="multipart/form-data"
-        >
+        <a href="#identify" class="nav-button">Explore the sky ↗</a>
+    </header>
 
-            <div class="upload-box">
+    <main>
 
-                <input
-                    type="file"
-                    name="image"
-                    accept="image/*"
-                    required
+        <section class="hero">
+            <div class="eyebrow">
+                <span class="live-dot"></span>
+                YOUR WINDOW TO THE UNIVERSE
+            </div>
+
+            <h1>
+                The universe is<br>
+                written in <span>stars.</span>
+            </h1>
+
+            <p class="hero-text">
+                Look up at the night sky. Discover the patterns,
+                stories and constellations hidden among the stars.
+            </p>
+
+            <a href="#identify" class="primary-button">
+                Identify a constellation <span>↗</span>
+            </a>
+
+            <div class="hero-decoration">
+                <span>✦</span>
+                <span>·</span>
+                <span>✧</span>
+                <span>·</span>
+                <span>✦</span>
+            </div>
+        </section>
+
+        <section class="identify-section" id="identify">
+
+            <div class="section-heading">
+                <span class="eyebrow">01 / DISCOVER</span>
+                <h2>What do you see <em>up there?</em></h2>
+                <p>Upload a photograph of the night sky to begin your discovery.</p>
+            </div>
+
+            <form action="/analyze" method="POST"
+                  enctype="multipart/form-data" id="upload-form">
+
+                <label class="upload-box" id="drop-zone" for="image-input">
+
+                    <div class="upload-icon">✧</div>
+
+                    <h3>Bring your night sky to life</h3>
+
+                    <p>Drag your photograph here, or <span>browse files</span></p>
+
+                    <small>JPG · PNG · WEBP · MAX 12 MB</small>
+
+                    <input
+                        type="file"
+                        name="image"
+                        id="image-input"
+                        accept="image/jpeg,image/png,image/webp"
+                        required
+                    >
+
+                    <img id="preview" alt="Selected sky preview">
+
+                </label>
+
+                <div id="file-info"></div>
+
+                <button class="primary-button analyze-button" type="submit">
+                    <span>✦</span> Analyze my sky
+                </button>
+
+            </form>
+
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if result_image %}
+            <section class="result-card" id="results">
+
+                <div class="result-heading">
+                    <span class="eyebrow">02 / YOUR DISCOVERY</span>
+                    <h2>Your sky, <em>revealed.</em></h2>
+                </div>
+
+                <img
+                    class="result-image"
+                    src="{{ url_for('uploaded_file', filename=result_image) }}"
+                    alt="Processed night sky"
                 >
 
-                <p>
-                    Choose a night-sky image
-                </p>
+                <div class="stats">
+                    <div class="stat">
+                        <strong>{{ star_count }}</strong>
+                        <span>Stars detected</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong>
+                            {% if constellation %}
+                                {{ confidence }}%
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                        <span>Match confidence</span>
+                    </div>
+                </div>
+
+                {% if constellation %}
+                <div class="constellation-result">
+                    <span class="eyebrow">YOUR CONSTELLATION</span>
+                    <h3>{{ constellation.name }}</h3>
+                    <p>{{ constellation.description }}</p>
+                </div>
+                {% else %}
+                <div class="constellation-result">
+                    <h3>No clear match found</h3>
+                    <p>
+                        We couldn't confidently identify a constellation.
+                        Try a clearer night-sky photograph with more visible stars.
+                    </p>
+                </div>
+                {% endif %}
+
+                <a href="#identify" class="secondary-button">
+                    Analyze another image ↗
+                </a>
+
+            </section>
+            {% endif %}
+
+        </section>
+
+        <section class="explore-section" id="explore">
+
+            <div class="section-heading">
+                <span class="eyebrow">03 / THE NIGHT SKY</span>
+                <h2>Meet the <em>constellations.</em></h2>
+                <p>Five celestial patterns to begin your journey.</p>
+            </div>
+
+            <div class="constellation-grid">
+
+                <article class="constellation-card">
+                    <div class="card-symbol">✦</div>
+                    <span>THE HUNTER</span>
+                    <h3>Orion</h3>
+                    <p>Recognizable by its three-star belt.</p>
+                </article>
+
+                <article class="constellation-card">
+                    <div class="card-symbol">✧</div>
+                    <span>THE GREAT BEAR</span>
+                    <h3>Ursa Major</h3>
+                    <p>Home to the famous Big Dipper.</p>
+                </article>
+
+                <article class="constellation-card">
+                    <div class="card-symbol">⋆</div>
+                    <span>THE QUEEN</span>
+                    <h3>Cassiopeia</h3>
+                    <p>Famous for its distinctive W shape.</p>
+                </article>
+
+                <article class="constellation-card">
+                    <div class="card-symbol">✧</div>
+                    <span>THE SCORPION</span>
+                    <h3>Scorpius</h3>
+                    <p>A curved body and sweeping tail.</p>
+                </article>
+
+                <article class="constellation-card">
+                    <div class="card-symbol">✦</div>
+                    <span>THE SWAN</span>
+                    <h3>Cygnus</h3>
+                    <p>A beautiful cross-shaped star pattern.</p>
+                </article>
 
             </div>
 
-            <button type="submit">
-                Analyze Sky
-            </button>
+        </section>
 
-        </form>
-
-        {% if result_image %}
-
-        <div class="result">
-
-            <h2>Analysis Result</h2>
-
-            <img
-                src="{{ url_for('uploaded_file',
-                    filename=result_image) }}"
-                alt="Processed night sky"
-            >
-
+        <section class="about-section" id="about">
+            <span class="eyebrow">04 / ABOUT THE PROJECT</span>
+            <h2>Every star has a <em>story.</em></h2>
             <p>
-                Detected stars:
-                <strong>{{ star_count }}</strong>
+                CONSTELLATIONS is an exploration of the night sky,
+                using computer vision to detect stars and discover
+                recognizable celestial patterns.
             </p>
+        </section>
 
-            {% if constellation %}
+    </main>
 
-            <h2>
-                Constellation:
-                {{ constellation.name }}
-            </h2>
-
-            <p>
-                {{ constellation.description }}
-            </p>
-
-            {% else %}
-
-            <p>
-                No constellation could be identified.
-            </p>
-
-            {% endif %}
-
-        </div>
-
-        {% endif %}
-
-    </div>
+    <footer>
+        <a class="brand" href="/">✧ CONSTELLATIONS</a>
+        <p>Made for those who look up. © 2026</p>
+    </footer>
 
 </body>
-
 </html>
