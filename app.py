@@ -1,44 +1,56 @@
-from flask import Flask, render_template, request, send_from_directory
+
+import os
+import json
+import uuid
+import itertools
+from pathlib import Path
+
 import cv2
 import numpy as np
-import os
-import uuid
-import json
+
+from flask import (
+    Flask, render_template, request,
+    send_from_directory, jsonify, url_for
+)
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_FOLDER = BASE_DIR / "uploads"
+DATA_FILE = BASE_DIR / "data" / "constellations.json"
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+UPLOAD_FOLDER.mkdir(exist_ok=True)
 
-DATA_FILE = "data/constellations.json"
+app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+MAX_CANDIDATES = 20
+MATCH_THRESHOLD = 0.12
 
 with open(DATA_FILE, "r", encoding="utf-8") as f:
     constellation_data = json.load(f)
 
 
-def detect_stars(image_path):
-    image = cv2.imread(image_path)
-
-    if image is None:
-        raise ValueError("Unable to read image")
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Reduce noise
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    # Detect bright objects
-    _, threshold = cv2.threshold(
-        blurred,
-        165,
-        255,
-        cv2.THRESH_BINARY
+def allowed_file(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower()
+        in ALLOWED_EXTENSIONS
     )
 
-    # Find bright regions
+
+def detect_stars(image):
+    if image is None or image.size == 0:
+        raise ValueError("Invalid image")
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    _, threshold = cv2.threshold(
+        blurred, 165, 255, cv2.THRESH_BINARY
+    )
+
     contours, _ = cv2.findContours(
         threshold,
         cv2.RETR_EXTERNAL,
@@ -50,116 +62,176 @@ def detect_stars(image_path):
     for contour in contours:
         area = cv2.contourArea(contour)
 
-        # Ignore extremely small/noisy regions
         if 1 <= area <= 100:
             moments = cv2.moments(contour)
 
-            if moments["m00"] != 0:
-                x = int(moments["m10"] / moments["m00"])
-                y = int(moments["m01"] / moments["m00"])
+            if moments["m00"] == 0:
+                continue
 
-                detected_stars.append((x, y))
+            x = int(moments["m10"] / moments["m00"])
+            y = int(moments["m01"] / moments["m00"])
 
-                cv2.circle(
-                    image,
-                    (x, y),
-                    5,
-                    (0, 255, 0),
-                    1
-                )
+            brightness = float(gray[y, x])
+
+            detected_stars.append({
+                "x": x,
+                "y": y,
+                "brightness": brightness
+            })
+
+    # Keep the strongest candidates when there are many detections.
+    detected_stars.sort(
+        key=lambda star: star["brightness"],
+        reverse=True
+    )
+
+    detected_stars = detected_stars[:MAX_CANDIDATES]
+
+    for star in detected_stars:
+        cv2.circle(
+            image,
+            (star["x"], star["y"]),
+            5,
+            (80, 255, 160),
+            1
+        )
 
     return image, detected_stars
 
 
-def normalize_stars(stars, image_width, image_height):
-    normalized = []
+def normalize_stars(stars, width, height):
+    # Preserve aspect ratio rather than stretching the image
+    # into a square.
+    scale = max(width, height)
 
-    for x, y in stars:
-        normalized_x = x / image_width
-        normalized_y = y / image_height
-
-        normalized.append(
-            (normalized_x, normalized_y)
-        )
-
-    return normalized
+    return np.array([
+        [
+            (star["x"] - width / 2) / scale,
+            (star["y"] - height / 2) / scale
+        ]
+        for star in stars
+    ], dtype=float)
 
 
-def match_constellation(stars, constellation_data):
-    if len(stars) < 3:
+def distance_signature(points):
+    distances = []
+
+    for i in range(len(points)):
+        for j in range(i + 1, len(points)):
+            distances.append(
+                np.linalg.norm(points[i] - points[j])
+            )
+
+    distances = np.sort(np.array(distances))
+
+    if len(distances) == 0 or distances[-1] < 1e-9:
         return None
 
-    detected = np.array(stars, dtype=float)
+    return distances / distances[-1]
+
+
+def match_constellation(stars, data):
+    if len(stars) < 3:
+        return None, None
 
     best_match = None
     best_score = float("inf")
 
-    for constellation in constellation_data["constellations"]:
-
+    for constellation in data["constellations"]:
         pattern = np.array(
             constellation["stars"],
             dtype=float
         )
 
-        if len(detected) < len(pattern):
+        required = len(pattern)
+
+        if len(stars) < required:
             continue
 
-        # Calculate pairwise distances for the detected stars
-        detected_distances = []
+        pattern_signature = distance_signature(pattern)
 
-        for i in range(len(detected)):
-            for j in range(i + 1, len(detected)):
-                distance = np.linalg.norm(
-                    detected[i] - detected[j]
-                )
-                detected_distances.append(distance)
-
-        # Calculate pairwise distances for the constellation pattern
-        pattern_distances = []
-
-        for i in range(len(pattern)):
-            for j in range(i + 1, len(pattern)):
-                distance = np.linalg.norm(
-                    pattern[i] - pattern[j]
-                )
-                pattern_distances.append(distance)
-
-        # Sort distances so that the comparison is
-        # independent of the order of the stars
-        detected_distances.sort()
-        pattern_distances.sort()
-
-        # Only compare the number of distances
-        # that the constellation pattern requires
-        detected_distances = detected_distances[
-            :len(pattern_distances)
-        ]
-
-        # Normalize distances by the largest distance
-        if detected_distances[-1] == 0:
+        if pattern_signature is None:
             continue
 
-        detected_distances = np.array(
-            detected_distances
-        ) / detected_distances[-1]
+        # Test subsets rather than assuming every detected
+        # bright object belongs to the constellation.
+        for subset in itertools.combinations(
+            range(len(stars)), required
+        ):
+            candidate = stars[list(subset)]
 
-        pattern_distances = np.array(
-            pattern_distances
-        ) / pattern_distances[-1]
+            signature = distance_signature(candidate)
 
-        # Calculate difference between the patterns
-        score = np.mean(
-            np.abs(
-                detected_distances - pattern_distances
-            )
-        )
+            if signature is None:
+                continue
 
-        if score < best_score:
-            best_score = score
-            best_match = constellation
+            score = float(np.mean(
+                np.abs(signature - pattern_signature)
+            ))
 
-    return best_match
-    
+            if score < best_score:
+                best_score = score
+                best_match = constellation
+
+    if best_match is None or best_score > MATCH_THRESHOLD:
+        return None, None
+
+    confidence = max(
+        0.0,
+        min(100.0, (1.0 - best_score / MATCH_THRESHOLD) * 100)
+    )
+
+    return best_match, round(confidence, 1)
+
+
+def process_image(file):
+    if not file or not file.filename:
+        raise ValueError("Please select an image.")
+
+    if not allowed_file(file.filename):
+        raise ValueError("Please upload a JPG, PNG or WEBP image.")
+
+    image_bytes = file.read()
+
+    if not image_bytes:
+        raise ValueError("The uploaded image is empty.")
+
+    image_array = np.frombuffer(image_bytes, np.uint8)
+    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+    if image is None:
+        raise ValueError("The uploaded file is not a valid image.")
+
+    if image.shape[0] < 50 or image.shape[1] < 50:
+        raise ValueError("The image is too small to analyze.")
+
+    result, stars = detect_stars(image.copy())
+
+    height, width = result.shape[:2]
+
+    normalized = normalize_stars(stars, width, height)
+
+    constellation, confidence = match_constellation(
+        normalized,
+        constellation_data
+    )
+
+    output_filename = f"result_{uuid.uuid4().hex}.jpg"
+    output_path = UPLOAD_FOLDER / output_filename
+
+    success = cv2.imwrite(str(output_path), result)
+
+    if not success:
+        raise ValueError("Unable to save the processed image.")
+
+    return {
+        "result_image": output_filename,
+        "star_count": len(stars),
+        "constellation": constellation,
+        "confidence": confidence
+    }
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -167,67 +239,97 @@ def index():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-
-    if "image" not in request.files:
-        return "No image uploaded", 400
-
-    file = request.files["image"]
-
-    if file.filename == "":
-        return "No image selected", 400
-
-    filename = str(uuid.uuid4()) + ".jpg"
-
-    input_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        filename
-    )
-
-    file.save(input_path)
-
     try:
-        result, stars = detect_stars(input_path)
-
-        height, width = result.shape[:2]
-
-        normalized_stars = normalize_stars(
-            stars,
-            width,
-            height
-        )
-
-        constellation = match_constellation(
-            normalized_stars,
-            constellation_data
-        )
-
-        output_filename = "result_" + filename
-
-        output_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            output_filename
-        )
-
-        cv2.imwrite(output_path, result)
+        result = process_image(request.files.get("image"))
 
         return render_template(
             "index.html",
-            result_image=output_filename,
-            star_count=len(stars),
-            constellation=constellation
+            **result,
+            error=None
         )
 
-    except Exception as e:
-        return f"Processing error: {e}", 500
+    except ValueError as e:
+        return render_template(
+            "index.html",
+            error=str(e)
+        ), 400
+
+    except Exception:
+        app.logger.exception("Image processing failed")
+        return render_template(
+            "index.html",
+            error="Something went wrong while analyzing the image."
+        ), 500
+
+
+@app.route("/api/analyze", methods=["POST"])
+def api_analyze():
+    """JSON API used by the Android and iOS applications."""
+
+    try:
+        result = process_image(request.files.get("image"))
+
+        constellation = result["constellation"]
+
+        return jsonify({
+            "success": True,
+            "result_image": url_for(
+                "uploaded_file",
+                filename=result["result_image"],
+                _external=True
+            ),
+            "star_count": result["star_count"],
+            "confidence": result["confidence"],
+            "constellation": constellation
+        })
+
+    except ValueError as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+    except Exception:
+        app.logger.exception("API processing failed")
+        return jsonify({
+            "success": False,
+            "error": "Image processing failed."
+        }), 500
+
+
+@app.route("/api/constellations")
+def api_constellations():
+    return jsonify(constellation_data)
 
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
+    if not filename.startswith("result_"):
+        return "Not found", 404
+
     return send_from_directory(
         app.config["UPLOAD_FOLDER"],
         filename
     )
 
 
+@app.errorhandler(413)
+def file_too_large(error):
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "success": False,
+            "error": "Image must be smaller than 12 MB."
+        }), 413
+
+    return render_template(
+        "index.html",
+        error="Image must be smaller than 12 MB."
+    ), 413
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=False
+    )
