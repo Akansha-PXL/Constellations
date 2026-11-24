@@ -11,7 +11,7 @@
                 [0.72, 0.75],
                 [0.35, 0.78]
             ],
-            "description": "Orion is a prominent constellation recognizable by the three stars forming its belt."
+            "description": "Orion is a prominent constellation along the celestial equator named after a hunter in Greek mythology."
         },
         {
             "name": "Ursa Major",
@@ -24,7 +24,7 @@
                 [0.78, 0.55],
                 [0.60, 0.65]
             ],
-            "description": "Ursa Major is a prominent northern constellation. Its seven brightest stars form the familiar Big Dipper pattern."
+            "description": "Ursa Major is a large constellation in the Northern Hemisphere best known for containing the Big Dipper asterism."
         },
         {
             "name": "Cassiopeia",
@@ -35,7 +35,7 @@
                 [0.67, 0.25],
                 [0.84, 0.45]
             ],
-            "description": "Cassiopeia is a northern constellation recognizable by its distinctive W-shaped pattern of bright stars."
+            "description": "Cassiopeia is a northern constellation easily recognized by its distinctive five-star "W" or "M" shape. It is named after a vain queen in Greek mythology"
         },
         {
             "name": "Scorpius",
