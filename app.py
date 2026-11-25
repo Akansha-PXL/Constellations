@@ -388,13 +388,74 @@ def receive_location():
     })
 
 
+@app.route("/api/visible-constellations", methods=["POST"])
+def visible_constellations_api():
 
-if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=False
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "success": False,
+            "error": "Invalid request data."
+        }), 400
+
+    try:
+        latitude = float(data["latitude"])
+        longitude = float(data["longitude"])
+
+        observed_at = datetime.fromisoformat(
+            data["observed_at"].replace("Z", "+00:00")
+        )
+
+        if observed_at.tzinfo is None:
+            raise ValueError("Timezone information is required.")
+
+        observed_at = observed_at.astimezone(timezone.utc)
+
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return jsonify({
+            "success": False,
+            "error": "Invalid coordinates or observation time."
+        }), 400
+
+    if not all(map(math.isfinite, [latitude, longitude])):
+        return jsonify({
+            "success": False,
+            "error": "Coordinates must be finite."
+        }), 400
+
+    if not -90 <= latitude <= 90:
+        return jsonify({
+            "success": False,
+            "error": "Invalid latitude."
+        }), 400
+
+    if not -180 <= longitude <= 180:
+        return jsonify({
+            "success": False,
+            "error": "Invalid longitude."
+        }), 400
+
+    results = find_visible_constellations(
+        latitude,
+        longitude,
+        observed_at
     )
+
+    return jsonify({
+        "success": True,
+        "latitude": latitude,
+        "longitude": longitude,
+        "observed_at": observed_at.isoformat(),
+        "visible_count": len(results),
+        "constellations": results,
+        "visibility_note": (
+            "Above-horizon calculation only. "
+            "Actual visibility depends on darkness, weather, "
+            "light pollution and obstructions."
+        )
+    })
+
 
 # =========================================
 # LOCATION-BASED CONSTELLATION VISIBILITY
@@ -561,3 +622,12 @@ def find_visible_constellations(latitude, longitude, dt):
     )
 
     return results
+
+
+if __name__ == "__main__":
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=False
+    )
+
