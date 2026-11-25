@@ -80,3 +80,145 @@ if (results) {
     });
 }
 
+// ======================================
+// BROWSER GEOLOCATION
+// ======================================
+
+const locationButton = document.getElementById("location-button");
+const locationStatus = document.getElementById("location-status");
+const locationDetails = document.getElementById("location-details");
+
+const latitudeElement = document.getElementById("latitude");
+const longitudeElement = document.getElementById("longitude");
+const accuracyElement = document.getElementById("accuracy");
+
+const clearLocationButton = document.getElementById("clear-location");
+
+let selectedLocation = null;
+
+if (locationButton) {
+
+    locationButton.addEventListener("click", () => {
+
+        if (!("geolocation" in navigator)) {
+            locationStatus.textContent =
+                "Geolocation is not supported by your browser.";
+            return;
+        }
+
+        locationButton.disabled = true;
+        locationButton.textContent = "Finding your location...";
+
+        locationStatus.textContent =
+            "Please allow location access in your browser.";
+
+        navigator.geolocation.getCurrentPosition(
+
+            async (position) => {
+
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+
+                selectedLocation = {
+                    latitude,
+                    longitude,
+                    accuracy
+                };
+
+                latitudeElement.textContent =
+                    latitude.toFixed(5) + "°";
+
+                longitudeElement.textContent =
+                    longitude.toFixed(5) + "°";
+
+                accuracyElement.textContent =
+                    Math.round(accuracy) + " m";
+
+                locationDetails.hidden = false;
+
+                locationStatus.textContent =
+                    "Your location was detected successfully.";
+
+                locationButton.disabled = false;
+                locationButton.textContent =
+                    "✦ Refresh my location";
+
+                // Send coordinates to Flask
+                try {
+
+                    const response = await fetch("/api/location", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(selectedLocation)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            data.error || "Unable to save location."
+                        );
+                    }
+
+                    locationStatus.textContent =
+                        "Location received successfully.";
+
+                } catch (error) {
+
+                    locationStatus.textContent =
+                        "Location detected, but could not reach the server.";
+
+                    console.error(error);
+                }
+            },
+
+            (error) => {
+
+                const messages = {
+                    1: "Location permission was denied. Please enable it in browser settings.",
+                    2: "Your location is currently unavailable.",
+                    3: "Location request timed out. Please try again."
+                };
+
+                locationStatus.textContent =
+                    messages[error.code] ||
+                    "Unable to detect your location.";
+
+                locationButton.disabled = false;
+                locationButton.textContent =
+                    "✦ Try again";
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 60000
+            }
+        );
+    });
+}
+
+// Clear selected location
+if (clearLocationButton) {
+
+    clearLocationButton.addEventListener("click", () => {
+
+        selectedLocation = null;
+
+        locationDetails.hidden = true;
+
+        latitudeElement.textContent = "—";
+        longitudeElement.textContent = "—";
+        accuracyElement.textContent = "—";
+
+        locationStatus.textContent =
+            "Your location has been cleared.";
+
+        locationButton.textContent =
+            "✦ Use my current location";
+    });
+}
+
