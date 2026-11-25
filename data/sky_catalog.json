@@ -1,1 +1,61 @@
 
+{
+  "constellations": [
+    {
+      "name": "Orion",
+      "stars": [
+        {"name": "Betelgeuse", "ra": 5.9195, "dec": 7.407},
+        {"name": "Rigel", "ra": 5.2423, "dec": -8.202},
+        {"name": "Bellatrix", "ra": 5.4189, "dec": 6.350},
+        {"name": "Saiph", "ra": 5.7959, "dec": -9.670},
+        {"name": "Alnitak", "ra": 5.6793, "dec": -1.943},
+        {"name": "Alnilam", "ra": 5.6036, "dec": -1.202},
+        {"name": "Mintaka", "ra": 5.5334, "dec": -0.299}
+      ]
+    },
+    {
+      "name": "Ursa Major",
+      "stars": [
+        {"name": "Dubhe", "ra": 11.0621, "dec": 61.750},
+        {"name": "Merak", "ra": 11.0307, "dec": 56.382},
+        {"name": "Phecda", "ra": 11.8972, "dec": 53.695},
+        {"name": "Megrez", "ra": 12.2571, "dec": 57.033},
+        {"name": "Alioth", "ra": 12.9005, "dec": 55.960},
+        {"name": "Mizar", "ra": 13.3987, "dec": 54.925},
+        {"name": "Alkaid", "ra": 13.7923, "dec": 49.313}
+      ]
+    },
+    {
+      "name": "Cassiopeia",
+      "stars": [
+        {"name": "Caph", "ra": 0.1529, "dec": 59.150},
+        {"name": "Schedar", "ra": 0.6751, "dec": 56.537},
+        {"name": "Gamma Cassiopeiae", "ra": 0.9451, "dec": 60.717},
+        {"name": "Ruchbah", "ra": 1.4303, "dec": 60.235},
+        {"name": "Segin", "ra": 1.9066, "dec": 63.670}
+      ]
+    },
+    {
+      "name": "Scorpius",
+      "stars": [
+        {"name": "Antares", "ra": 16.4901, "dec": -26.432},
+        {"name": "Shaula", "ra": 17.5601, "dec": -37.104},
+        {"name": "Sargas", "ra": 17.6219, "dec": -42.998},
+        {"name": "Dschubba", "ra": 16.0056, "dec": -22.622},
+        {"name": "Acrab", "ra": 16.0906, "dec": -19.805},
+        {"name": "Girtab", "ra": 17.2025, "dec": -39.030}
+      ]
+    },
+    {
+      "name": "Cygnus",
+      "stars": [
+        {"name": "Deneb", "ra": 20.6905, "dec": 45.280},
+        {"name": "Sadr", "ra": 20.3705, "dec": 40.257},
+        {"name": "Gienah", "ra": 20.7702, "dec": 33.970},
+        {"name": "Delta Cygni", "ra": 19.7496, "dec": 45.131},
+        {"name": "Albireo", "ra": 19.5120, "dec": 27.960}
+      ]
+    }
+  ]
+}
+
