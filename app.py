@@ -3,6 +3,7 @@ import os
 import json
 import uuid
 import itertools
+import math
 from pathlib import Path
 
 import cv2
@@ -325,6 +326,66 @@ def file_too_large(error):
         "index.html",
         error="Image must be smaller than 12 MB."
     ), 413
+
+
+@app.route("/api/location", methods=["POST"])
+def receive_location():
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "success": False,
+            "error": "Invalid location data."
+        }), 400
+
+    try:
+        latitude = float(data["latitude"])
+        longitude = float(data["longitude"])
+        accuracy = float(data["accuracy"])
+
+    except (KeyError, TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "error": "Missing or invalid coordinates."
+        }), 400
+
+   
+
+    if not all(map(math.isfinite, [
+        latitude, longitude, accuracy
+    ])):
+        return jsonify({
+            "success": False,
+            "error": "Coordinates must be finite numbers."
+        }), 400
+
+    if not -90 <= latitude <= 90:
+        return jsonify({
+            "success": False,
+            "error": "Invalid latitude."
+        }), 400
+
+    if not -180 <= longitude <= 180:
+        return jsonify({
+            "success": False,
+            "error": "Invalid longitude."
+        }), 400
+
+    if not 0 <= accuracy <= 1000000:
+        return jsonify({
+            "success": False,
+            "error": "Invalid location accuracy."
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "message": "Location received successfully.",
+        "latitude": latitude,
+        "longitude": longitude,
+        "accuracy": accuracy
+    })
+
 
 
 if __name__ == "__main__":
