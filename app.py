@@ -395,3 +395,169 @@ if __name__ == "__main__":
         port=5000,
         debug=False
     )
+
+# =========================================
+# LOCATION-BASED CONSTELLATION VISIBILITY
+# =========================================
+
+SKY_CATALOG_FILE = BASE_DIR / "data" / "sky_catalog.json"
+
+with open(SKY_CATALOG_FILE, "r", encoding="utf-8") as f:
+    sky_catalog = json.load(f)
+
+
+def julian_date(dt):
+    """Convert UTC datetime to Julian Date."""
+
+    dt = dt.astimezone(timezone.utc)
+
+    year = dt.year
+    month = dt.month
+
+    day = (
+        dt.day
+        + dt.hour / 24
+        + dt.minute / 1440
+        + dt.second / 86400
+        + dt.microsecond / 86400000000
+    )
+
+    if month <= 2:
+        year -= 1
+        month += 12
+
+    A = math.floor(year / 100)
+    B = 2 - A + math.floor(A / 4)
+
+    return (
+        math.floor(365.25 * (year + 4716))
+        + math.floor(30.6001 * (month + 1))
+        + day + B - 1524.5
+    )
+
+
+def local_sidereal_time(dt, longitude):
+    """Calculate local mean sidereal time in degrees."""
+
+    jd = julian_date(dt)
+    T = (jd - 2451545.0) / 36525.0
+
+    gmst = (
+        280.46061837
+        + 360.98564736629 * (jd - 2451545.0)
+        + 0.000387933 * T**2
+        - T**3 / 38710000
+    )
+
+    return (gmst + longitude) % 360
+
+
+def calculate_altitude_azimuth(ra_hours, dec_degrees,
+                               latitude, longitude, dt):
+    """Convert RA/Dec to local altitude and azimuth."""
+
+    lst = local_sidereal_time(dt, longitude)
+
+    ra_degrees = ra_hours * 15
+
+    hour_angle = (lst - ra_degrees + 180) % 360 - 180
+
+    H = math.radians(hour_angle)
+    dec = math.radians(dec_degrees)
+    lat = math.radians(latitude)
+
+    sin_alt = (
+        math.sin(lat) * math.sin(dec)
+        + math.cos(lat) * math.cos(dec) * math.cos(H)
+    )
+
+    altitude = math.degrees(
+        math.asin(max(-1, min(1, sin_alt)))
+    )
+
+    y = -math.sin(H) * math.cos(dec)
+
+    x = (
+        math.sin(dec) * math.cos(lat)
+        - math.cos(dec) * math.sin(lat) * math.cos(H)
+    )
+
+    azimuth = math.degrees(math.atan2(y, x))
+    azimuth = (azimuth + 360) % 360
+
+    return round(altitude, 2), round(azimuth, 2)
+
+
+def get_direction(azimuth):
+
+    directions = [
+        "North",
+        "North-East",
+        "East",
+        "South-East",
+        "South",
+        "South-West",
+        "West",
+        "North-West"
+    ]
+
+    index = round(azimuth / 45) % 8
+
+    return directions[index]
+
+
+def find_visible_constellations(latitude, longitude, dt):
+    """Find constellations with representative stars above 10 degrees."""
+
+    results = []
+
+    for constellation in sky_catalog["constellations"]:
+
+        visible_stars = []
+        all_stars = []
+
+        for star in constellation["stars"]:
+
+            altitude, azimuth = calculate_altitude_azimuth(
+                star["ra"],
+                star["dec"],
+                latitude,
+                longitude,
+                dt
+            )
+
+            star_info = {
+                "name": star["name"],
+                "altitude": altitude,
+                "azimuth": azimuth,
+                "direction": get_direction(azimuth)
+            }
+
+            all_stars.append(star_info)
+
+            if altitude > 10:
+                visible_stars.append(star_info)
+
+        if visible_stars:
+
+            highest_star = max(
+                visible_stars,
+                key=lambda star: star["altitude"]
+            )
+
+            results.append({
+                "name": constellation["name"],
+                "visible_star_count": len(visible_stars),
+                "total_star_count": len(all_stars),
+                "highest_altitude": highest_star["altitude"],
+                "direction": highest_star["direction"],
+                "azimuth": highest_star["azimuth"],
+                "stars": visible_stars
+            })
+
+    results.sort(
+        key=lambda item: item["highest_altitude"],
+        reverse=True
+    )
+
+    return results
