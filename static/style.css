@@ -572,3 +572,77 @@ footer p {
     }
 }
 
+/* VISIBLE CONSTELLATIONS */
+
+.visibility-results {
+    margin-top: 35px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+    text-align: left;
+}
+
+.visibility-heading {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.visibility-heading h3 {
+    font-size: 27px;
+    margin: 14px 0;
+}
+
+#visibility-time {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+#visibility-status {
+    color: var(--lavender);
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 20px;
+    line-height: 1.7;
+}
+
+#visible-constellation-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.visible-constellation-card {
+    background: linear-gradient(145deg, #142344, #0c142b);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 20px;
+}
+
+.visible-constellation-card h4 {
+    font-family: "Playfair Display", serif;
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--lavender);
+    margin: 0 0 15px;
+}
+
+.visible-constellation-card p {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
+    margin: 7px 0;
+}
+
+.visibility-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.8;
+    margin-top: 22px;
+}
+
+@media (max-width: 500px) {
+    #visible-constellation-list {
+        grid-template-columns: 1fr;
+    }
+}
+
