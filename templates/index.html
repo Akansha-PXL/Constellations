@@ -170,6 +170,74 @@
 
         </section>
 
+        
+<section class="location-section" id="location">
+
+    <div class="section-heading">
+        <span class="eyebrow">03 / YOUR LOCATION</span>
+        <h2>Discover your <em>night sky.</em></h2>
+        <p>
+            Find your geographical position to personalize
+            your stargazing experience.
+        </p>
+    </div>
+
+    <div class="location-card">
+
+        <div class="location-icon">⌖</div>
+
+        <h3>Where are you observing from?</h3>
+
+        <p>
+            Allow location access to find your current coordinates.
+        </p>
+
+        <button
+            type="button"
+            class="primary-button"
+            id="location-button">
+            <span>✦</span> Use my current location
+        </button>
+
+        <div id="location-status" role="status" aria-live="polite">
+            Your location has not been selected.
+        </div>
+
+        <div id="location-details" hidden>
+
+            <div class="location-stats">
+
+                <div class="location-stat">
+                    <strong id="latitude">—</strong>
+                    <span>Latitude</span>
+                </div>
+
+                <div class="location-stat">
+                    <strong id="longitude">—</strong>
+                    <span>Longitude</span>
+                </div>
+
+                <div class="location-stat">
+                    <strong id="accuracy">—</strong>
+                    <span>Accuracy</span>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="clear-location">
+                Clear location
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
         <section class="explore-section" id="explore">
 
             <div class="section-heading">
