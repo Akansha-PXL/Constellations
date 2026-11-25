@@ -165,6 +165,11 @@ if (locationButton) {
 
                     locationStatus.textContent =
                         "Location received successfully.";
+                    // Calculate visible constellations
+                         await loadVisibleConstellations(
+                         latitude,
+                         longitude
+                    );
 
                 } catch (error) {
 
@@ -210,6 +215,13 @@ if (clearLocationButton) {
 
         locationDetails.hidden = true;
 
+       const visibilityResults =
+              document.getElementById("visibility-results");
+
+       if (visibilityResults) {
+              visibilityResults.hidden = true;
+}
+
         latitudeElement.textContent = "—";
         longitudeElement.textContent = "—";
         accuracyElement.textContent = "—";
@@ -221,4 +233,128 @@ if (clearLocationButton) {
             "✦ Use my current location";
     });
 }
+
+// ======================================
+// VISIBLE CONSTELLATIONS API
+// ======================================
+
+async function loadVisibleConstellations(latitude, longitude) {
+
+    const visibilityResults =
+        document.getElementById("visibility-results");
+
+    const visibilityStatus =
+        document.getElementById("visibility-status");
+
+    const visibilityTime =
+        document.getElementById("visibility-time");
+
+    const constellationList =
+        document.getElementById("visible-constellation-list");
+
+   if (
+    !visibilityResults ||
+    !visibilityStatus ||
+    !visibilityTime ||
+    !constellationList
+   ) {
+    console.error("Visibility HTML elements are missing.");
+    return;
+   }
+
+    visibilityResults.hidden = false;
+
+    visibilityStatus.textContent =
+        "Calculating your visible constellations...";
+
+    constellationList.replaceChildren();
+
+    try {
+
+        const response = await fetch(
+            "/api/visible-constellations",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    latitude: latitude,
+                    longitude: longitude,
+                    observed_at: new Date().toISOString()
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.error || "Unable to calculate visibility."
+            );
+        }
+
+        visibilityTime.textContent =
+            "Observation time: " +
+            new Date(data.observed_at).toLocaleString();
+
+        if (data.constellations.length === 0) {
+
+            visibilityStatus.textContent =
+                "No representative constellation stars are above 10° altitude.";
+
+            return;
+        }
+
+        visibilityStatus.textContent =
+            data.visible_count +
+            " constellations found above the horizon.";
+
+        data.constellations.forEach(constellation => {
+
+            const card = document.createElement("article");
+            card.className = "visible-constellation-card";
+
+            const heading = document.createElement("h4");
+            heading.textContent = constellation.name;
+
+            const details = document.createElement("p");
+
+            details.textContent =
+                constellation.visible_star_count +
+                " of " +
+                constellation.total_star_count +
+                " representative stars visible";
+
+            const direction = document.createElement("p");
+
+            direction.textContent =
+                "Direction: " + constellation.direction;
+
+            const altitude = document.createElement("p");
+
+            altitude.textContent =
+                "Highest star altitude: " +
+                constellation.highest_altitude + "°";
+
+            card.append(
+                heading,
+                details,
+                direction,
+                altitude
+            );
+
+            constellationList.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        visibilityStatus.textContent =
+            "Could not calculate visible constellations. Please try again.";
+
+        console.error("Visibility API error:", error);
+    }
+}
+
 
